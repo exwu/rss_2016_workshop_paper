@@ -1,60 +1,64 @@
-\documentclass{article}
+\documentclass[conference]{IEEEtran}
+\usepackage{times}
 
+% numbers option provides compact numerical references in the text. 
+\usepackage[numbers]{natbib}
 \usepackage{multicol}
+\usepackage[bookmarks=true]{hyperref}
+
+
+\pdfinfo{
+   /Author (Homer Simpson)
+   /Title  (Robots: Our new overlords)
+   /CreationDate (D:20101201120000)
+   /Subject (Robots)
+   /Keywords (Robots;Overlords)
+}
+
  
 \usepackage{float}
-
- 
 \usepackage[margin=0.8in]{geometry}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{tikz}
-\usepackage{natbib}
 \usepackage{bbm}
 \usetikzlibrary{shapes.geometric}
 \usetikzlibrary{calc,positioning,shapes,arrows}
-%\usepackage{natbib}
-%\bibliographystyle{unsrtnat}
 \newcommand{\Iota}{\mathcal{I}}
 
-\bibliographystyle{unsrtnat}
-\setlength{\columnsep}{0.8cm}
-
-\title{Social Feedback For Robotic Collaboration}
-\author{Emily Wu}
+\graphicspath{{./resources/}}
 
 \begin{document}
-\pagenumbering{gobble} 
 
-\vspace*{8cm}
-
-\begin{raggedleft}
-	\scshape
-	\huge \textbf{Social Feedback For Robotic Collaboration} \\
-	\vspace{0.3cm}
-	\Large 
-	Emily Wu  \\
-	Professor Stefanie Tellex \\
-	Professor Jeff Huang \\
-	Brown University \\
-	May 2016 \\
-\end{raggedleft}
-
-\newpage
-
-
-
-\vspace*{\fill}
-\section*{Abstract}
-Robotic collaboration requires not just communication from the human to the robot, but also from the robot to the human. We call this robot-to-human communication \emph{social feedback}. In order to flexibly and intelligently generate social feedback, we describe a Partially Observable Markov Decision Process that incorporates the human's belief about the robot's intent. We then engineer a system that can respond in near-real time that is supplemented with a multithreaded interaction model that allows for more responsive human-robot interactions. Initial evaluation in simulation shows improvement in interaction length in a toy domain and improvement in accuracy in the full domain.
-\vspace*{\fill}
-\newpage
-\tableofcontents
-\newpage
-\pagenumbering{arabic} 
+\title{Social Feedback For Robotic Collaboration}
+\author{Author Names Omitted for Anonymous Review. Paper-ID [add your ID here]}
 
 \maketitle
-\begin{multicols}{2}
+
+
+%\author{\authorblockN{Michael Shell}
+%\authorblockA{School of Electrical and\\Computer Engineering\\
+%Georgia Institute of Technology\\
+%Atlanta, Georgia 30332--0250\\
+%Email: mshell@ece.gatech.edu}
+%\and
+%\authorblockN{Homer Simpson}
+%\authorblockA{Twentieth Century Fox\\
+%Springfield, USA\\
+%Email: homer@thesimpsons.com}
+%\and
+%\authorblockN{James Kirk\\ and Montgomery Scott}
+%\authorblockA{Starfleet Academy\\
+%San Francisco, California 96678-2391\\
+%Telephone: (800) 555--1212\\
+%Fax: (888) 555--1212}}
+
+
+
+\begin{abstract}
+Robotic collaboration requires not just communication from the human to the robot, but also from the robot to the human. We call this robot-to-human communication \emph{social feedback}. In order to flexibly and intelligently generate social feedback, we describe a Partially Observable Markov Decision Process that incorporates the human's belief about the robot's intent. We then engineer a system that can respond in near-real time that is supplemented with a multithreaded interaction model that allows for more responsive human-robot interactions. Initial evaluation in simulation shows improvement in interaction length in a toy domain and improvement in accuracy in the full domain.
+\end{abstract}
+
 	
 \section{Introduction}
 
@@ -594,7 +598,6 @@ This thesis is the result of work that has been ongoing since December 2014, inc
 
 This project is part of an ongoing initiative towards social robotics by Brown University's H2R laboratory under Professor Stefanie Tellex. 
 
-\end{multicols}
 
 \newpage
 \section{Appendix}
@@ -714,7 +717,8 @@ Actions $\texttt{say(p)}$ take the form of a statement ``I believe that the obje
 
 \newpage
 
-\bibliography{main}
+\bibliographystyle{plainnat}
+\bibliography{references}
 
 
 \end{document}
