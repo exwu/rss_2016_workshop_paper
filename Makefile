@@ -6,7 +6,6 @@ default:
 
 clean: 
 	rm *.log
-	rm *.pdf
 	rm *.aux
 	rm *.toc
 	rm *.blg

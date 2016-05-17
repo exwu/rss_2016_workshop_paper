@@ -26,7 +26,6 @@
 \usetikzlibrary{calc,positioning,shapes,arrows}
 \newcommand{\Iota}{\mathcal{I}}
 
-\graphicspath{{./resources/}}
 \newcommand{\argmax}{\operatornamewithlimits{argmax}}
 \begin{document}
 
@@ -72,7 +71,7 @@ Specifically, we address the object delivery task. In this task, a set of object
 
 \begin{figure}[H]
 	\begin{center}
-		\includegraphics[scale=0.17]{firstPerson}
+		\includegraphics[scale=0.17]{resources/firstPerson}
 		\caption{The experimental setup from the participant's perspective: a Baxter robot has six objects within reach. The participant stands in front of the table to provide speech and gesture requests}
 	\end{center}
 \end{figure}
@@ -481,6 +480,8 @@ If we assume that $\beta_0$ begins as the uniform distribution over objects, we 
 
 \subsection{Policy Generation}
 
+\exwnote{Will rewrite this depending on whether we use POSS or not. If not, this section will probably removed or changed to say only BSS was used}
+
 It is possible to calculate an optimal policy to solve our POMDP, however, due its size, doing so is intractable. Moreover, we would like to solve our POMDP at speeds suitable for interaction. Fortunately, approximate solutions exist which allow us to trade off accuracy for computational time. One such solver is the Partially Observable Sparse Sampling (POSS) algorithm \citep{Gopalan2016}, which uses Monte-Carlo Tree Search~\citep{coulom2006efficient} and Upper Confidence Bound exploration~\citep{kocsis2006bandit} to derive a policy for our POMDP. In order to improve the accuracy of the planner, we also provide a heuristic for the random rollouts that prevents the rollouts from selecting pick actions that are unlikely to select the correct objects. 
 
 We implement this model within the Brown UMBC Reinforcement Learning And Planning~\citep{burlap} framework, which allows for many standard AI and Reinforcement learning algorithms to be used with our domain. 
@@ -530,64 +531,30 @@ In order to create more fluid interactions, we employ a multithreaded solution t
 
 \section{Evaluation}
 
-Due to difficulties with the POSS algorithm, we return to Belief Sparse Sampling~\citep{bss} (BSS) to evaluate the efficacy of our model (for more details about POSS, see section \ref{sec:poss}). BSS, however, takes several minutes to generate an action, which is too slow for user interaction. Instead, we evaluate the performance of our model in simulation. A procedure for user studies with human participants is also described.\footnote{We do note that it would be possible to run the full domain in real time to test with users by precomputing and caching a policy for each belief state that describes the optimal action to take from that state. This is the scheme that we used in \cite{socialfeedback}}
+We use Belief Sparse Sampling~\citep{bss} (BSS) to solve our domain to evaluate the efficacy of our model. BSS takes several minutes to generate an action, which is too slow for user interaction. Instead, we evaluate the performance of our model in simulation. A procedure for user studies with human participants is also described.\footnote{We do note that it would be possible to run the full domain in real time to test with users by precomputing and caching a policy for each belief state that describes the optimal action to take from that state. This is the scheme that we used in \cite{socialfeedback}}
 
 \subsection{Results in Simulation}
 
-We run 25 trials in simulation. Results are presented in figure \ref{fig:toyresults}. We see a sharp reduction in the number of actions needed until the robot can successfully pick the correct object, while accuracy remains the same. In this simple domain, it is easy to identify the correct object with enough observations, accounting for the high accuracy in both trials. However, taking social feedback actions allows the agent to request the observations that it needs from the human to complete the interaction as quickly as possible. Notice also that the variance in the number of actions the robot takes until the first correct pick is very small in the social trials, while it is very large in the non-social trials. Social feedback actions allow the agent to control the interaction so that it is as brief as possible. 
+We run 25 trials in simulation. Results are presented in figure \ref{fig:toyresults}. We see a reduction in the number of actions needed until the robot can successfully pick the correct object, while accuracy remains the same. With only six objects, it is easy to identify the correct object with enough observations, accounting for the high accuracy in both trials. However, taking social feedback actions allows the agent to request the observations that it needs from the human to complete the interaction as quickly as possible. Notice also that the variance in the number of actions the robot takes until the first correct pick is very small in the social trials, while it is very large in the non-social trials. Social feedback actions allow the agent to control the interaction so that it is as brief as possible. 
 
 \begin{figure}[H]
 \begin{center}
-	\includegraphics[width=0.45\textwidth]{toy_results}
+	\includegraphics[width=0.45\textwidth]{resources/results}
 \end{center}
-\caption{Results in simulation for the toy domain. \texttt{turns\_until\_pick} is the number of timesteps until first correct pick,  \texttt{pick\_acc} is the ratio of correct picks to total picks, \texttt{avg\_time} is the the time to compute a single action}
+\caption{Results in simulation. \texttt{turns\_until\_pick} is the number of timesteps until first correct pick,  \texttt{pick\_acc} is the ratio of correct picks to total picks, \texttt{avg\_time} is the the time to compute a single action}
 	\label{fig:toyresults}
 \end{figure}
 
-\subsubsection{Full Domain Results}
-
-
-We run two simulated trials: one without any social feedback actions (only \texttt{pick(i)} and \texttt{wait}), and one with non-social feedback actions and a random subset of six social feedback actions (to reduce computation time). There are four objects on the table for each trial. Each trial uses a different set of randomized actions (to reduce computation costs). Results are presented in figure \ref{fig:results}. 
-
-We see a small, but statistically significant improvement in accuracy at the cost of slightly less than one additional action for the first correct pick. The less pronounced effects of social feedback are likely due to the greater number of observations that are possible, and the relative probability of seeing a useful observation is reduced. This more complicated domain is also hampered by our reduced horizon of 2, allowing the planner to only consider up to two actions in the future. In the full domain, the agent is much less likely to receive enough observations to correctly pick the object within two timesteps, even using social feedback actions. 
-
-To see more improvement in speed and accuracy, we would likely need to use a larger planning horizon, which is only possible with approximate solvers such as POSS. In addition, increasing the number of objects, i.e., the complexity of the task, would likely result in a sharper difference between the number of turns required to give the human the correct object. The robot is unlikely to receive a useful observation unless it can signal to the human which observation it requires. 
-
-
-
-\begin{figure}[H]
-\begin{center}
-	\includegraphics[width=0.45\textwidth]{full_results}
-\end{center}
-\caption{Results in simulation for the full domain. \texttt{turns\_until\_pick} is the number of timesteps until first correct pick,  \texttt{pick\_acc} is the ratio of correct picks to total picks, \texttt{avg\_time} is the the time to compute a single action}
-	\label{fig:results}
-\end{figure}
 
 \subsection{User Studies Procedure}
+
+\exwnote{Will rewrite this if/when we run user studies}
 
 Users are acquired from convenience sampling by inviting volunteers from the Brown University CIT building. For each user, two trials are run: a baseline trial without any social feedback actions, and a social-feedback trial with social feedback actions enabled. For each trial, the user is given a microphone and invited to use speech and gesture to ask the robot for a specific item on the table, and to not change that object until it was picked up. After their requested object is picked up, they request a new object and repeat the procedure until the robot has handed them all objects on the table. It is decided randomly whether the social or non-social trial is performed first for each user. Between the two trials, they are given a survey to assess the qualitative aspects of the interaction, including metrics such as the robot's perceived intelligence, friendliness, etc. 
 
 This procedure is based off a previous user study run for an earlier iteration of this project. In this user study, we noticed a small effect showing the increased speed of interaction with social feedback actions enabled. However, this study was run with only six participants, so these effects were likely not statistically significant. When user studies are run in the future, we will have a larger sample size, but also increase the difficulty of the task by adding more objects, which should further highlight the necessity of social feedback. 
 
 Interesting metrics to measure include are how the perception of the robot is correlated to the actions the robot takes, as well as the accuracy and speed of the interaction. We may also consider a longer-running user study to investigate how people learn how to interact with the robot. 
-
-\subsection{What happened to POSS?} \label{sec:poss}
-
-Initially we planned to use POSS to solve our POMDP. As an approximate solver, it would have been possible to solve the POMDP at speeds quickly enough for real-time user interaction. In addition, we would not be limited by short planning horizons, which prevent our robot from planning far into the future. However, despite our efforts to integrate POSS, the nature of the algorithm was shown to be incompatible with our domain. 
-
-POSS is a Monte Carlo Tree Search algorithm that uses Upper Confidence Bounds (UCB) to decide which action to take. Specifically, selecting an action is treated as a multi-armed bandit problem, where the reward is the discounted reward for taking that action. The downside to this approach is that if taking an action results in an incorrect pick (which gives the agent a reward of $-50$) anywhere down the tree, then the planner is unlikely to ever try that action again. Because the POSS algorithm relies on random rollouts to generate actions when it has no estimates for the best action, it is extremely likely to choose an incorrect pick action. In attempt to rectify this behavior, we created a heuristic for the random rollouts that prevents the algorithm from choosing pick actions that are unlikely to be correct. Unfortunately, this heuristic was not enough (see figure~\ref{fig:poss_results}). Using POSS with this heuristic, we achieve only 25\% accuracy, which is only about twice as good as random chance. The algorithm only waits an average of about one action before deciding to pick. But, at the same time, the computation time is extremely fast: much less than a second, sometimes more than 100 times faster than Belief Sparse Sampling. 
-
-\begin{figure}[H]
-	\begin{center}
-		\includegraphics[width=0.45\textwidth]{poss_results}
-		\caption{Results for POSS with Heuristic function in the toy domain.\texttt{turns\_until\_pick} is the number of timesteps until first correct pick,\texttt{pick\_acc} is the ratio of correct picks to total picks, \texttt{avg\_time} is the the time to compute a single action.} 
-		\label{fig:poss_results}
-	\end{center}
-\end{figure}
-
-Despite removing the main source of negative reward, the randomness of the rollout was still obscuring the true utility of taking most actions. We then attempted to remove the randomness by forcing the rollout to choose the action according to Belief Sparse Sampling. This removed much of the variance in the q-values of the actions (which describe the utility of a given action), but this still did not produce a consistent policy for the following reason: Upper Confidence Bound methods tend to underestimate the q-values of actions. However, for terminal actions like \texttt{pick(i)} in the toy domain, it will give fairly accurate results. As a result, the more beneficial \texttt{inform(x, y)} actions can be given lower q-values than terminal \texttt{pick(i)} actions, resulting in very incorrect policies. 
-
-In order to solve our POMDP, we will need to rely on approximate solvers. Whether the domain or POSS can be tweaked to be compatible must be investigated. If they cannot be made compatible, we will explore other approximate solving methods, including policy improvement and non-UCB-based Monte Carlo methods. 
 
 
 \section{Future Work}
