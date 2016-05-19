@@ -324,7 +324,7 @@ where $\eta$ is a normalization factor.
 
 Next, we will set $p(\iota) = \beta(\iota)$. $p(\iota)$ describes the robot's belief in $\iota$. This value is represented in the robot's belief-state vector, $b$. But since the human does not know $b$, it uses its estimate of $b$, $\beta$. Our new expression is 
 
-$$p(o|s) = \eta \frac{p(o|\iota) \beta(\iota)}{\sum_{\iota^\prime} p(o|\iota^\prime)\beta(\iota^\prime)} $$
+$$p(i|o) = \eta \frac{p(o|\iota) \beta(\iota)}{\sum_{\iota^\prime} p(o|\iota^\prime)\beta(\iota^\prime)} $$
 
 To account for suboptimal behavior and avoid irregularities in our observation function, we soften our assumptions of optimality such that $1-\epsilon$ fraction of the time, the human chooses the optimal action. With probability $\epsilon$ they pick acccording to the base-level observation function described above. 
 
@@ -335,9 +335,112 @@ To account for suboptimal behavior and avoid irregularities in our observation f
 	\end{cases}
 \end{equation*}
 
-Using $\beta$ as a prior for our observation function incentivizes the robot to take actions that modify $\beta$ in such a way that increase the probability of useful observations, while in turn decreasing the probability of getting observations that tell the robot things it already knows. This result falls out of our assumption that the human is more likely to provide observations that communicate its intentions to the robot well.\footnote{It is perhaps more accurate to say that the human does not pick proportional to the probability, but picks the action with the greatest value  of $p(\iota|o)$. However, this deterministic observation function would lead to irregularities when faced with real human users who do not pick perfectly. Using a softmax function with a tuned temperature parameter would allow us to balance the strong guarantees of of a deterministic max with the flexibility of ``proportional to probability''.}  For a worked example in a toy domain, see the appendix. 
+Using $\beta$ as a prior for our observation function incentivizes the robot to take actions that modify $\beta$ in such a way that increase the probability of useful observations, while in turn decreasing the probability of getting observations that tell the robot things it already knows. This result falls out of our assumption that the human is more likely to provide observations that communicate its intentions to the robot well. Consider the following example: 
 
 
+First, we will define a toy domain. In this toy domain, the states are the following: $\{AA, AB, BA, BB\}$ as well as $\beta$, which is a distribution over these states. The observations are $\{A\_, \_A, B\_, \_B\}$, which mean ``the first character is an A'', ``the second character is an A'', ``the first character is B'', ``and the second character is a B'' respectively. These observations are provided by the human. The agent can take actions $CX$ which is informing the human that the agent believes the Xth character is a C, as well as ``picking'' the object or waiting. For the basel level observation, the human always gives truthful observations, and has equal probability of generating an observation pertaining to a particular character. We will see how this affects the POMDP observation function, which incorporates $\beta$. 
+
+Consider the following situation: 
+
+Intially both $b$, the robot's belief about the human's desired object and $\beta$, the human's belief about the robot's belief, are uniform. The true state is $AA$. 
+
+\begin{center}
+	\footnotesize
+\begin{tabular}{|c| c| c| c | c|}
+	\hline
+	$t$ & $b$ & $\beta$ & $a$ & $o$ \\
+	\hline
+	$0$ & [0.25, 0.25, 0.25, 0.25] & [0.25, 0.25, 0.25, 0.25] & & \\
+	\hline
+\end{tabular}
+\end{center}
+
+
+The robot then receives an observation $A\_$. The new beliefs are: 
+
+\begin{center}
+	\footnotesize
+\begin{tabular}{|c| c| c| c | c|}
+	\hline
+	$t$ & $b$ & $\beta$ & $a$ & $o$ \\
+	\hline
+	$0$ & [0.25, 0.25, 0.25, 0.25] & [0.25, 0.25, 0.25, 0.25] & & \\
+	\hline
+	$1$ & [0.50, 0.50, 0, 0] & [0.25, 0.25, 0.25, 0.25] & & $A\_$ \\
+	\hline
+\end{tabular}
+\end{center}
+
+Next, the robot can choose to take an action. If it chooses to wait, this is the resulting state
+
+
+\begin{center}
+	\footnotesize
+\begin{tabular}{|c| c| c| c | c|}
+	\hline
+	$t$ & $b$ & $\beta$ & $a$ & $o$ \\
+	\hline
+	$0$ & [0.25, 0.25, 0.25, 0.25] & [0.25, 0.25, 0.25, 0.25] & & \\
+	\hline
+	$1$ & [0.50, 0.50, 0, 0] & [0.25, 0.25, 0.25, 0.25] & & $A\_$ \\
+	\hline
+	$2$ & [0.50, 0.50, 0, 0] & [0.25, 0.25, 0.25, 0.25] & wait  &  \\
+	\hline
+\end{tabular}
+\end{center}
+
+Examine the probabilities of each observation.
+
+\begin{align*}
+	p(A\_ | AA, \beta) &= \frac{ p(A\_)\beta(AA) }{ \sum_{h \in \{AA, AB, BA, BB\}} p(A\_ | h) } \\
+	&= \frac{0.5 * 0.25}{0.5 * 0.25 + 0.5 * 0.25 + 0 + 0} \\
+	&= 0.5
+\end{align*}
+
+\begin{align*}
+	p(\_A | AA, \beta) & \\
+	&= \frac{ p(\_A)\beta(AA) }{ \sum_{h \in \{AA, AB, BA, BB\}} p(\_A | h) } \\
+	&= \frac{0.5 * 0.25}{0.5 * 0.25 + 0 + 0.5 * 0.25 + 0} \\
+	&= 0.5
+\end{align*}
+
+The probabilities of all other actions are 0, since we only give truthful observations.
+
+Notice that this situation is not ideal. According to the human, producing each of these observations equally optimal, so we are equally likely to see either observation in this situation, even though the agent already knows that the first character is an A. Now, consider what would happen if the robot chose the action $A0$. We would get the following belief states: 
+
+
+\begin{center}
+	\footnotesize
+\begin{tabular}{|c| c| c| c | c|}
+	\hline
+	$t$ & $b$ & $\beta$ & $a$ & $o$ \\
+	\hline
+	$0$ & [0.25, 0.25, 0.25, 0.25] & [0.25, 0.25, 0.25, 0.25] & & \\
+	\hline
+	$1$ & [0.50, 0.50, 0, 0] & [0.25, 0.25, 0.25, 0.25] & & $A\_$ \\
+	\hline
+	$2$ & [0.50, 0.50, 0, 0] & [0.5, 0.5, 0, 0] & $A0$  &  \\
+	\hline
+\end{tabular}
+\end{center}
+
+If we examine the probabilities again: 
+
+\begin{align*}
+	p(A\_|AA, \beta) & \\
+	&= \frac{ p(A\_)\beta(AA) }{ \sum_{h \in \{AA, AB, BA, BB\}} p(A\_ | h) } \\
+	&= \frac{0.5 * 0.5}{0.5 * 0.5 + 0.5 * 0.5 + 0 + 0} \\
+	&= 0.5 \\
+\end{align*}
+
+\begin{align*}
+	p(\_A|AA, \beta) &\propto \frac{ p(\_A)\beta(AA) }{ \sum_{h \in \{AA, AB, BA, BB\}} p(\_A | h) } \\
+	&= \frac{0.5 * 0.5}{0.5 * 0.5 + 0 + 0 + 0} \\
+	&= 1 \\
+\end{align*}
+
+
+Now, observation $\_A$ is the most optimal, so there is high probability the human will generate this observation for the robot. This observation will give the robot the information it needs to pick the correct object, $AA$. This provides an incentive for the robot to choose an action that conveys something about its current state of belief over doing nothing. 
 
 \paragraph{Modification for Object Delivery Domain}
 
@@ -441,7 +544,7 @@ Recall that $\beta$ is a distribution over states (objects) $\iota_t$, so we can
 	&= p(a_{t} | \iota_{t+1}) \sum_{\iota_{t}} p(\iota_{t+1} | \iota_{t}) \beta_{t}(\iota_{t}) 
 \end{align*}
 
-This requires us to specify $p(a_{t} | \iota_{t+1})$. Recall that actions are operating as observations from the perspective of the human, making this expression a \emph{reverse observation function}. We must provide a reverse observation function for each action. These will often be very similar to the base-level observations described in Section \ref{sssec:of}, though adapted slightly to suit being performed by a Baxter robot. See the appendix for details. 
+This requires us to specify $p(a_{t} | \iota_{t+1})$. Recall that actions are operating as observations from the perspective of the human, making this expression a \emph{reverse observation function}. We must provide a reverse observation function for each action. These will often be very similar to the base-level observations described in Section \ref{sssec:of}, though adapted slightly to suit being performed by a Baxter robot. See section ~\ref{reverse} for details. 
 
 We must also specify a transition function, $p(\iota_{t+1} | \iota_t)$. We will use the object transition function described earlier. 
 
@@ -451,12 +554,12 @@ We can rewrite our element-wise update for the whole $\beta$ vector using a matr
 $$\beta_{t+1} = A_{t}T \beta_{t}$$
 
 
-where $A_{t}$ is a matrix representing the reverse observation function $p(a_{t} | \iota_{t+1})$ and $T$ is a matrix representing the transition function $p(\iota_{t+1}|\iota_{t})$.  If the set of items $\mathcal{\iota} = \{ \iota_1, \iota_2, \ldots, \iota_n\}$, A is a diagonal such that
+where $A_{t}$ is a matrix representing the reverse observation function $p(a_{t} | \iota_{t+1})$ and $T$ is a matrix representing the transition function $p(\iota_{t+1}|\iota_{t})$.  If the set of items $\mathcal{\iota} = \{ \iota_1, \iota_2, \ldots, \iota_n\}$, A is a diagonal matrix such that
 
 \begin{equation*}
 	a_{ij} = \begin{cases}
 		0 & \text{if } i \ne j \\
-		p(a_t | \iota_{t+1} = \iota_i & \text{otherwise}
+		p(a_t | \iota_{t+1}) = \iota_i & \text{otherwise}
 	\end{cases}
 \end{equation*}
 
@@ -478,6 +581,19 @@ This gives us a deterministic transition function for $\beta$:
 \end{equation}
 
 If we assume that $\beta_0$ begins as the uniform distribution over objects, we can now calculate $\beta_t$ for any given time step deterministically. However, there are many assumptions that were made, and there is additional expressiveness that can be used by allowing for non-deterministic updates to $\beta$. However, we lead the exploration of this space for future work. 
+
+\paragraph{Reverse Observation Functions} \label{reverse}
+
+We define a reverse observation function for each action the robot can take. These define how $\beta$ is updated when a robot takes an action. 
+
+For $\texttt{look(x)}$ actions, we define an angle $\phi_l$ to be the angle between a vector from the robot's face to the location $x$ and the vector from the robot's face to the location of object $\iota_{t+1}$. We assume this angle is chosen from a normal distribution centered at 0 with a hand tuned variance, $v_l$. 
+$$p(a_{t} = \texttt{look(x)} | \iota_{t+1}) = \mathcal{N}(\phi_l | 0, v_{l})$$
+
+For $\texttt{point(x)}$ actions, we define an angle $\phi_p$ to be the angle between the vector from Baxter's wrist to location $x$ and the vector from Baxter's wrist joint to the object $\iota_{t+1}$. This gesture is chosen according to a normal distribution with hand-tuned variance $v_p$. 
+
+$$p(a_{t} = \texttt{point(x)} | \iota_{t+1}) = \mathcal{N}(\phi_p | 0, v_{p})$$
+
+Actions $\texttt{say(p)}$ take the form of a statement ``I believe that the object you want is $p$'', where $p$ is some property from some object's vocabulary. The probability of this action given some $\iota$ is identical to the speech model for the human, given in section~\ref{baseobs}. 
 
 \subsection{Policy Generation}
 
@@ -571,25 +687,6 @@ This procedure is based off a previous user study run for an earlier iteration o
 
 Interesting metrics to measure include are how the perception of the robot is correlated to the actions the robot takes, as well as the accuracy and speed of the interaction. We may also consider a longer-running user study to investigate how people learn how to interact with the robot. 
 
-\subsection{What happened to POSS?} \label{sec:poss}
-
-Initially we planned to use POSS to solve our POMDP. As an approximate solver, it would have been possible to solve the POMDP at speeds quickly enough for real-time user interaction. In addition, we would not be limited by short planning horizons, which prevent our robot from planning far into the future. However, despite our efforts to integrate POSS, the nature of the algorithm was shown to be incompatible with our domain. 
-
-POSS is a Monte Carlo Tree Search algorithm that uses Upper Confidence Bounds (UCB) to decide which action to take. Specifically, selecting an action is treated as a multi-armed bandit problem, where the reward is the discounted reward for taking that action. The downside to this approach is that if taking an action results in an incorrect pick (which gives the agent a reward of $-50$) anywhere down the tree, then the planner is unlikely to ever try that action again. Because the POSS algorithm relies on random rollouts to generate actions when it has no estimates for the best action, it is extremely likely to choose an incorrect pick action. In attempt to rectify this behavior, we created a heuristic for the random rollouts that prevents the algorithm from choosing pick actions that are unlikely to be correct. Unfortunately, this heuristic was not enough (see figure~\ref{fig:poss_results}). Using POSS with this heuristic, we achieve only 25\% accuracy, which is only about twice as good as random chance. The algorithm only waits an average of about one action before deciding to pick. But, at the same time, the computation time is extremely fast: much less than a second, sometimes more than 100 times faster than Belief Sparse Sampling. 
-
-\begin{figure}[H]
-	\begin{center}
-		\includegraphics[width=0.45\textwidth]{poss_results}
-		\caption{Results for POSS with Heuristic function in the toy domain.\texttt{turns\_until\_pick} is the number of timesteps until first correct pick,\texttt{pick\_acc} is the ratio of correct picks to total picks, \texttt{avg\_time} is the the time to compute a single action.} 
-		\label{fig:poss_results}
-	\end{center}
-\end{figure}
-
-Despite removing the main source of negative reward, the randomness of the rollout was still obscuring the true utility of taking most actions. We then attempted to remove the randomness by forcing the rollout to choose the action according to Belief Sparse Sampling. This removed much of the variance in the q-values of the actions (which describe the utility of a given action), but this still did not produce a consistent policy for the following reason: Upper Confidence Bound methods tend to underestimate the q-values of actions. However, for terminal actions like \texttt{pick(i)} in the toy domain, it will give fairly accurate results. As a result, the more beneficial \texttt{inform(x, y)} actions can be given lower q-values than terminal \texttt{pick(i)} actions, resulting in very incorrect policies. 
-
-In order to solve our POMDP, we will need to rely on approximate solvers. Whether the domain or POSS can be tweaked to be compatible must be investigated. If they cannot be made compatible, we will explore other approximate solving methods, including policy improvement and non-UCB-based Monte Carlo methods. 
-
-
 \section{Future Work}
 
 The next task will be to run user-studies with human participants to compare the performance of the system with and without social feedback. This will require the use of approximate solvers to allow us to solve the POMDP in real time, or to precompute policies. 
@@ -613,121 +710,6 @@ This thesis is the result of work that has been ongoing since December 2014, inc
 This project is part of an ongoing initiative towards social robotics by Brown University's H2R laboratory under Professor Stefanie Tellex. 
 
 
-\newpage
-\section{Appendix}
-
-\subsection{Posterior Observation Function: Toy Example}
-In order to demonstrate and motivate the posterior observation function, we will define a toy domain. In this toy domain, the states are the following: $\{AA, AB, BA, BB\}$ as well as $\beta$, which is a distribution over these states. The observations are $\{A\_, \_A, B\_, \_B\}$, which mean ``the first character is an A'', ``the second character is an A'', ``the first character is B'', ``and the second character is a B'' respectively. These observations are provided by the human. The agent can take actions $CX$ which is informing the human that the agent believes the Xth character is a C, as well as ``picking'' the object or waiting. For the basel level observation, the human always gives truthful observations, and has equal probability of generating an observation pertaining to a particular character. We will see how this affects the POMDP observation function, which incorporates $\beta$. 
-
-Consider the following situation: 
-
-Intially both $b$, the robot's belief about the human's desired object and $\beta$, the human's belief about the robot's belief, are uniform. The true state is $AA$. 
-
-\begin{center}
-\begin{tabular}{|c| c| c| c | c|}
-	\hline
-	$t$ & $b$ & $\beta$ & $a$ & $o$ \\
-	\hline
-	$0$ & [0.25, 0.25, 0.25, 0.25] & [0.25, 0.25, 0.25, 0.25] & & \\
-	\hline
-\end{tabular}
-\end{center}
-
-
-The robot then receives an observation $A\_$. The new beliefs are: 
-
-\begin{center}
-\begin{tabular}{|c| c| c| c | c|}
-	\hline
-	$t$ & $b$ & $\beta$ & $a$ & $o$ \\
-	\hline
-	$0$ & [0.25, 0.25, 0.25, 0.25] & [0.25, 0.25, 0.25, 0.25] & & \\
-	\hline
-	$1$ & [0.50, 0.50, 0, 0] & [0.25, 0.25, 0.25, 0.25] & & $A\_$ \\
-	\hline
-\end{tabular}
-\end{center}
-
-Next, the robot can choose to take an action. If it chooses to wait, this is the resulting state
-
-
-\begin{center}
-\begin{tabular}{|c| c| c| c | c|}
-	\hline
-	$t$ & $b$ & $\beta$ & $a$ & $o$ \\
-	\hline
-	$0$ & [0.25, 0.25, 0.25, 0.25] & [0.25, 0.25, 0.25, 0.25] & & \\
-	\hline
-	$1$ & [0.50, 0.50, 0, 0] & [0.25, 0.25, 0.25, 0.25] & & $A\_$ \\
-	\hline
-	$2$ & [0.50, 0.50, 0, 0] & [0.25, 0.25, 0.25, 0.25] & wait  &  \\
-	\hline
-\end{tabular}
-\end{center}
-
-Examine the probabilities of each observation.
-
-\begin{align*}
-	p(A\_ | AA, \beta) &= \frac{ p(A\_)\beta(AA) }{ p(A\_)\beta(AA) + p(A\_)\beta(AB) + p(A\_)\beta(BA) + p(A\_)\beta(BB)} \\
-	&= \frac{0.5 * 0.25}{0.5 * 0.25 + 0.5 * 0.25 + 0 + 0} \\
-	&= 0.5
-\end{align*}
-
-\begin{align*}
-	p(\_A | AA, \beta) &= \frac{ p(\_A)\beta(AA) }{ p(\_A)\beta(AA) + p(\_A)\beta(AB) + p(\_A)\beta(BA) + p(\_A)\beta(BB)} \\
-	&= \frac{0.5 * 0.25}{0.5 * 0.25 + 0 + 0.5 * 0.25 + 0} \\
-	&= 0.5
-\end{align*}
-
-The probabilities of all other actions are 0, since we only give truthful observations.
-
-Notice that this situation is not ideal. The agent has equal probabilities of receiving either observation, even though the agent already knows that the first character is an A. Now, consider what would happen if the robot chose the action $A0$. We would get the following belief states: 
-
-
-\begin{center}
-\begin{tabular}{|c| c| c| c | c|}
-	\hline
-	$t$ & $b$ & $\beta$ & $a$ & $o$ \\
-	\hline
-	$0$ & [0.25, 0.25, 0.25, 0.25] & [0.25, 0.25, 0.25, 0.25] & & \\
-	\hline
-	$1$ & [0.50, 0.50, 0, 0] & [0.25, 0.25, 0.25, 0.25] & & $A\_$ \\
-	\hline
-	$2$ & [0.50, 0.50, 0, 0] & [0.5, 0.5, 0, 0] & $A0$  &  \\
-	\hline
-\end{tabular}
-\end{center}
-
-If we examine the probabilities again: 
-
-\begin{align*}
-	p(A\_|AA, \beta) &\propto \frac{ p(A\_)\beta(AA) }{ p(A\_)\beta(AA) + p(A\_)\beta(AB) + p(A\_)\beta(BA) + p(A\_)\beta(BB)} \\
-	&\propto \frac{0.5 * 0.5}{0.5 * 0.5 + 0.5 * 0.5 + 0 + 0} \\
-	&\propto 0.5 \\
-	&= \frac{1}{3}
-\end{align*}
-
-\begin{align*}
-	p(\_A|AA, \beta) &\propto \frac{ p(\_A)\beta(AA) }{ p(\_A)\beta(AA) + p(\_A)\beta(AB) + p(\_A)\beta(BA) + p(\_A)\beta(BB)} \\
-	&\propto \frac{0.5 * 0.5}{0.5 * 0.5 + 0 + 0 + 0} \\
-	&\propto 1 \\
-	&= \frac{2}{3}
-\end{align*}
- 
-Now, we are more likely to get the observation $\_A$, which is more useful to us than the observation $A\_$, since it gives us the information we need to pick the correct object, $AA$. This provides an incentive for the robot to choose an action that conveys something about its current state of belief over doing nothing. 
-
-\subsection{Reverse Observation Functions}
-
-We define a reverse observation function for each action the robot can take. These define how $\beta$ is updated when a robot takes an action. 
-
-For $\texttt{look(x)}$ actions, we define an angle $\phi_l$ to be the angle between a vector from the robot's face to the location $x$ and the vector from the robot's face to the location of object $\iota_{t+1}$. We assume this angle is chosen from a normal distribution centered at 0 with a hand tuned variance, $v_l$. 
-$$p(a_{t} = \texttt{look(x)} | \iota_{t+1}) = \mathcal{N}(\phi_l | 0, v_{l})$$
-
-For $\texttt{point(x)}$ actions, we define an angle $\phi_p$ to be the angle between the vector from Baxter's wrist to location $x$ and the vector from Baxter's wrist joint to the object $\iota_{t+1}$. This gesture is chosen according to a normal distribution with hand-tuned variance $v_p$. 
-
-$$p(a_{t} = \texttt{point(x)} | \iota_{t+1}) = \mathcal{N}(\phi_p | 0, v_{p})$$
-
-Actions $\texttt{say(p)}$ take the form of a statement ``I believe that the object you want is $p$'', where $p$ is some property from some object's vocabulary. The probability of this action given some $\iota$ is identical to the speech model for the human, given in section~\ref{baseobs}. 
 
 \newpage
 
