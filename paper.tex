@@ -15,6 +15,7 @@
    /Keywords (Robots;Overlords)
 }
 \newcommand{\exwnote}[1]{\textcolor{orange}{\textbf{EXW: #1}}}
+\newcommand{\stnote}[1]{\textcolor{blue}{\textbf{stefie10: #1}}}
  
 \usepackage{float}
 \usepackage[margin=0.8in]{geometry}
@@ -67,6 +68,7 @@ Feedback refers to the responses that are received by an agent when it takes som
 
 Many existing works focus on the task of interpreting human communications\citep{tellex11,matuszek12,tellex12,misra14}, but provide no response if the interpretation fails. As a consequence, it becomes difficult to tell whether the robot is still making progress in interpreting the request, or has failed. Some works do allow for robotic responses to ambiguous situations, but the manner of their responses are hard coded, often limited to generic requests, such as ``please repeat the question''. In this work, we provide a means to generate these requests in the form of language and gesture that can flexibly represent the robot's state as well as inform the human in such a way so that allows the human to help the robot as much as possible. 
 
+\stnote{swap with following paragraph}
 Specifically, we address the object delivery task. In this task, a set of objects are laid out on a table within a Baxter robot's reach. A human participant requests an object from the robot using speech and gesture (pointing). The robot must interpret the human's speech and gesture and deliver the requested object to the human. The task then repeats with the remaining objects on the table. This task is achievable without social feedback; the robot need only wait until enough information is given and then deliver the correct object. However, we will show that by adding social feedback actions, such as asking questions, looking at objects, and pointing at objects, we will achieve better accuracy and speed as well as improved user experience. 
 
 \begin{figure}[H]
@@ -76,6 +78,7 @@ Specifically, we address the object delivery task. In this task, a set of object
 	\end{center}
 \end{figure}
 
+\stnote{swap with previous paragraph}
 We will solve this problem by formulating it as a Partially Observable Markov Decision Process (POMDP)\citep{kaelbling99}, which will allow us to dynamically and flexibly determine how to choose social feedback actions. First, we will describe a two agent model and use this to motivate the construction of a POMDP. The crucial improvement we make over existing robot interaction models is that we maintain a state variable that tracks the human's interpretations of the actions the robot takes. We will next discuss how we solved this POMDP and other measures we took to allow our system to respond dynamically and fluidly. 
 
 As an initial evaluation, we run our model in simulation to showcase improved speed and accuracy in the object delivery task. 
@@ -83,12 +86,14 @@ As an initial evaluation, we run our model in simulation to showcase improved sp
 
 \section{Related Work}
 
+\stnote{search and replace all cite with  citet or citep}
+
 \exwnote{The related works are a little out of date; they focus more on multimodal interpretation, even though this paper is more about modeling and action generation now}
 
-This work is primarily built off of \cite{eldon15thesis}, which describes a system for incremental speech and gesture recognition in an object-delivery domain. In previous work \citep{socialfeedback}, the model from \cite{eldon15thesis} is expanded from a bayesian inference model into a POMDP model that can ask yes-no questions. In this work, we generalize the idea of the affect of robot's actions on humans state within a POMDP framework. 
+This work is primarily built off of \citet{eldon15thesis}\stnote{cite icra paper instead}, which describes a system for incremental speech and gesture recognition in an object-delivery domain. In previous work \citep{socialfeedback}, the model from \cite{eldon15thesis} is expanded from a bayesian inference model into a POMDP model that can ask yes-no questions. In this work, we generalize the idea of the affect of robot's actions on humans state within a POMDP framework. 
 
 Work demonstrating the importance of social feedback in human-human
-communication has been done in the field of psycholinguistics. In  \cite{clark04}, one human (labeled the builder)
+communication has been done in the field of psycholinguistics. In  \citet{clark04}, one human (labeled the builder)
 builds a Lego model according to instructions given by another human
 (labeled the director). In the feedback-free trials, the director's
 instructions were prerecorded, and the resulting models were very
@@ -119,15 +124,17 @@ dialog understanding, treats dialog in this turn-based way. Our model is also ba
 Interactive POMDPs (I-POMDPs)~\citep{gmytrasiewicz2005framework} describe a multi-agent POMDP that allows agents to anticipate each other's actions by forming beliefs over action and observation histories. This work attempts to accomplish the same, but makes more specialized assumptions that allow for a more tractable state space. 
 
 Alternative approaches to
-POMDPs include cognitive architecutres such as SOAR~\citep{soar} or
+POMDPs include cognitive architecutres\stnote{spellcheck!} such as SOAR~\citep{soar} or
 DIARC~\citep{diarc}.  By taking a probabilistic approach, we can seemlessly
 fuse information from multiple sources and explicitly reason about the
 robot's uncertainty when choosing actions.
 \section{Technical Approach}
 
+\stnote{Put a few sentences here giving an overview.  no section/subsection without intro text}
+
 \subsection{POMDP Overview}
 
-Markov Decision Processes (MDPs) are models that describe how an agent can take actions to transition between states, receiving rewards for its actions. Partially Observable Markov Decision Processes (POMDPs) are used to model MDPs where the true state is not known. Instead, the agent receives observations that are generated by the true state, and must infer what the true state is from the observations. Thus, the agent maintains a belief over true states which is updated as it receives new observations. In subsequent sections, we will refer to this belief over hidden states as $b$. The agent must then use this belief state to determine which action to take to maximize its expected value of the reward over time. This splits the POMDP into two main components, a state estimator and a policy generator. A typical graphical model for a POMDP is provided in figure~\ref{fig:pomdp}.\footnote{In this model, we have omitted the dependency between an action and the observation from the next timestep. In the POMDP discussed in this paper, we will not use this dependency for any action. Rather, the affect of the actions on the observation is encapsulated in the state.}
+Markov Decision Processes (MDPs) are models that describe how an agent can take actions to transition between states, receiving rewards for its actions. Partially Observable Markov Decision Processes (POMDPs) are used to model MDPs where the true state is not known. Instead, the agent receives observations that are generated by the true state, and must infer what the true state is from the observations. Thus, the agent maintains a belief over true states which is updated as it receives new observations. In subsequent sections, we will refer to this belief over hidden states as $b$. The agent must then use this belief state to determine which action to take to maximize its expected value of the reward over time. This splits the POMDP into two main components, a state estimator and a policy generator. A typical graphical model for a POMDP is provided in figure~\ref{fig:pomdp}\stnote{cut this figure}.\footnote{In this model, we have omitted the dependency between an action and the observation from the next timestep. In the POMDP discussed in this paper, we will not use this dependency for any action. Rather, the affect of the actions on the observation is encapsulated in the state.}
 
 \tikzstyle{h} = [circle, draw, fill=white, minimum size=3em]
 \tikzstyle{a} = [diamond, draw, fill=gray!40, minimum size=3em]
@@ -209,12 +216,12 @@ To model this human-robot interactive task, we will use a POMDP. To motivate the
 		\path [line] (ohtm1) edge (st); 
 		\path [line] (oht) edge (stp1); 
 	\end{tikzpicture}
-	\caption{A two-agent model based off two POMDPs}
+	\caption{A two-agent model based off two POMDPs \stnote{Let's name this model and call it our model.}}
 	\label{fig:twoagent}
 \end{center}
 \end{figure}
 
-WE represent human states $s_t$, robot states $\sigma_\tau$, and observations generated by the robot $\omega_\tau$ and by the human $o_{t}$. Observe that the structure of this model resembles two POMDPs combined together at their actions and observations. The lower POMDP is the POMDP from the human's perspective: the robot has some hidden states $\sigma_\tau$, which the human observes by means of $\omega_{t}$. The human takes actions $o_{t}$ to influence the robot's state $\sigma_t$. The upper POMDP models the interaction from the robot's perspective: the human's state $s_t$ is hidden from the robot, and the robot must infer it from observations $o_{t}$. When the robot takes action $\omega_{\tau-1}$, it affects the human's state $s_t$. Crucially, each agent treats the other agent's action as an observation that influences their belief about the other agent's hidden state. Thus, the human's actions affect the robot's belief about the human's state, which is what we call $b$ above. Importantly, the reverse is also true: the robot's actions affect the human's belief about what the robot's hidden state is. We will call the human's belief over the robot's hidden state $\beta$. 
+We represent human states $s_t$, robot states $\sigma_\tau$, and observations generated by the robot $\omega_\tau$ and by the human $o_{t}$. Observe that the structure of this model resembles two POMDPs combined together at their actions and observations. The lower POMDP is the POMDP from the human's perspective: the robot has some hidden states $\sigma_\tau$, which the human observes by means of $\omega_{t}$. The human takes actions $o_{t}$ to influence the robot's state $\sigma_t$. The upper POMDP models the interaction from the robot's perspective: the human's state $s_t$ is hidden from the robot, and the robot must infer it from observations $o_{t}$. When the robot takes action $\omega_{\tau-1}$, it affects the human's state $s_t$. Crucially, each agent treats the other agent's action as an observation that influences their belief about the other agent's hidden state. Thus, the human's actions affect the robot's belief about the human's state, which is what we call $b$ above. Importantly, the reverse is also true: the robot's actions affect the human's belief about what the robot's hidden state is. We will call the human's belief over the robot's hidden state $\beta$. 
 
 
 In the following section we will use this dual structure to inform the construction of our POMDP as applied to our object delivery domain. 
@@ -230,8 +237,8 @@ We define our object-delivery POMDP as a tuple $\{S, A, T, R, \Omega, O\}$:
 			\item $\iota \in \Iota$ is the object the human desires. This is a hidden variable. 
 			\item $\beta$ is a distribution over the robot's hidden states, as defined above. In this domain, the robot's hidden state contains which object the robot will hand the human, or which object the robot believes the human wants. We assume the human estimates the distribution over the hidden state by observing the actions the robot has taken. Specifically, $\beta_t(\iota_t) = p(\iota_t | a_{1:t-1})$. While this variable is technically unknown, we make some assumptions about the transition functions and initialization so $\beta_t$'s value is known at every time step. 
 		\end{itemize}
-		Since our state is composed of both hidden and known states, it resembles a Mixed Observability MDP~\citep{momdp}, and we leverage the computational benefits of having both hidden and known states. 
-	\item The set of actions A consists of both social and non-social actions. Non-social actions are \texttt{pick(i)} (picking up  and delivering an object $i$) and \texttt{wait}. Social actions are \texttt{point(x)}, pointing at a location $x$; \texttt{look(x)}, looking at a location $x$;\footnote{$x$ is chosen from the set of points that describe the surface of the table. For computational reasons, in this work, we restrict it to the set of object locations} and \texttt{say(p)}, informing the human that the robot believes the desired object has property $p$, where $p$ is an element of some object's vocabulary. 
+		Since our state is composed of both hidden and known states, it resembles \stnote{resembles?  It *is* a MOMDP.} a Mixed Observability MDP~\citep{momdp}, and we leverage the computational benefits of having both hidden and known states. 
+	\item The set of actions \stnote{mathcal A?} A consists of both social and non-social actions. Non-social actions are \texttt{pick(i)} (picking up  and delivering an object $i$) and \texttt{wait}. Social actions are \texttt{point(x)}, pointing at a location $x$; \texttt{look(x)}, looking at a location $x$;\footnote{$x$ is chosen from the set of points that describe the surface of the table. For computational reasons, in this work, we restrict it to the set of object locations} and \texttt{say(p)}, informing the human that the robot believes the desired object has property $p$, where $p$ is an element of some object's vocabulary. 
 	\item $T(s, a, s^\prime) = p(s^\prime | s, a)$. We make the assumption that the human's desired object $\iota$ does not change unless the robot picks up object $\iota$. The set of all objects $\Iota$ transistions to $\Iota \setminus \{i\}$ when the robot chooses action \texttt{pick(i)}. For each action in $A$, we define a ``reverse observation function'' that describes our assumptions about how the human imagines the robot generates actions (which the human sees as observations) given a hidden robot state. This allows us to define a transition function for $\beta$. The transition dynamics are described in greater detail in section  \ref{sssec:tf}. 
 	\item $R(s, a, s^\prime)$ returns a numeric reward from transitioning from $s$ to $s^\prime$ by taking action $a$. In this domain, we incentivize our robot to pick the correct object by giving it a $+10$ reward if it delivers the correct object and a $-50$ reward for picking the incorrect object. We also give negative rewards for taking various actions: \texttt{wait} receives a $-1$ reward (to incentivize the robot to finish the task quickly); \texttt{look(x)} receives a reward of $-2$; \texttt{say(p)} receives a reward of $-3$; \texttt{point(x)}  receives a reward of $-4$. These additional penalties for social actions reflect the penalty for ``bothering the user'', as well as the time it takes to execute these actions. These reward values were chosen experimentally to result in a high rate of pick accuracy. 
 	\item Observation $o \in \Omega$ represents an observation generated by the human. These are tuples of language and gesture: $\langle l, g \rangle$. Language utterance $l$ is represented by a string of any number of words, obtained by transcribing microphone input using webkit's speech recognition API through google chrome.  A gesture $g$ is represented by a vector from the participant's shoulder to their wrist, and all gestures are interpreted as a straight-armed point. This vector is obtained using the Kinect's tracking software. 
@@ -239,7 +246,7 @@ We define our object-delivery POMDP as a tuple $\{S, A, T, R, \Omega, O\}$:
 \end{itemize}
 
 For quick reference, a table of variables is provided in figure~\ref{fig:vars}. 
-
+\stnote{Make this much smaller; use smaller font.}
 \begin{figure*}
 	\begin{center}
 		\begin{tabular}{r l}
@@ -620,6 +627,7 @@ We run 25 trials in simulation. Results are presented in figure \ref{fig:toyresu
 
 
 \subsection{User Studies Procedure}
+\stnote{cut}
 
 \exwnote{Will rewrite this if/when we run user studies}
 
