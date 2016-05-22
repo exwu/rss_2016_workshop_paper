@@ -62,15 +62,13 @@ Robotic collaboration requires not just communication from the human to the robo
 	
 \section{Introduction}
 
-Collaboration is a process that relies heavily on communication for its success. When humans collaborate, this communication is both obvious and implicit---we not only instruct and request aid from each other, but we also tacitly monitor our partners for signs of approval and understanding while producing these signals ourselves. However, in robotics, many of these vital components of successful communication are missing or lost. The absence of these signals likely account for numerous failures in human-robot collaborative tasks. In order to give robots these missing communicative skills, we employ \emph{social feedback} signals to provide human-like communication to both inform the human participant of the robot's state and request information from the participant. 
-
-Feedback refers to the responses that are received by an agent when it takes some action. These feedback responses inform the agent about the success or failure of its actions. \emph{Social feedback} therefore refers to social signals that convey this information. These can be explicit signals, such as ``I want this object,'' or implicit signals, such as a perplexed expression. When humans interact with another human, they use this feedback to improve the flow and clarity of the collaboration, which in turn improves its success. In this paper, we describe a  framework that describes how robotic agent should likewise generate social feedback for its human partner in human-collaborative tasks, and show that it improves the speed and accuracy of human-robot interaction. 
+Collaboration is a process that relies heavily on communication for its success. When humans collaborate, this communication is both obvious and implicit---we not only instruct and request aid from each other, but we also tacitly monitor our partners for signs of approval and understanding while producing these signals ourselves. However, in robotics, many of these vital components of successful communication are missing or lost. The absence of these signals likely account for numerous failures in human-robot collaborative tasks. In order to give robots these missing communicative skills, we employ \emph{social feedback} signals to provide human-like communication to both inform the human participant of the robot's state and request information from the participant. In this paper, we describe a  framework that describes how robotic agent should likewise generate social feedback for its human partner in human-collaborative tasks, and show that it improves the speed and accuracy of human-robot interaction. 
 
 Many existing works focus on the task of interpreting human communications\citep{tellex11,matuszek12,tellex12,misra14}, but provide no response if the interpretation fails. As a consequence, it becomes difficult to tell whether the robot is still making progress in interpreting the request, or has failed. Some works do allow for robotic responses to ambiguous situations, but the manner of their responses are hard coded, often limited to generic requests, such as ``please repeat the question.'' In this work, we provide a means to generate these requests in the form of language and gesture that can flexibly represent the robot's state as well as inform the human in such a way so that allows the human to help the robot as much as possible. 
 
-We will solve this problem by formulating it as a Partially Observable Markov Decision Process (POMDP)\citep{kaelbling99}, which will allow us to dynamically and flexibly determine how to choose social feedback actions. First, we will describe a two agent model and use this to motivate the construction of a POMDP. The crucial improvement we make over existing robot interaction models is that we maintain a state variable that tracks the human's interpretations of the actions the robot takes. 
 
-\stnote{swap with following paragraph}
+We will solve this problem by formulating it as a Partially Observable Markov Decision Process (POMDP)\citep{kaelbling99}, which will allow us to dynamically and flexibly determine how to choose social feedback actions. First, introduce a two-agent POMDP model called a $\beta$-POMDP. We can then reduce this model to a POMDP that is improved over existing robot interaction models by the inclusion of a state variable that tracks the human's interpretations of the actions the robot takes. 
+
 Specifically, we address the object delivery task. In this task, a set of objects are laid out on a table within a Baxter robot's reach. A human participant requests an object from the robot using speech and gesture (pointing). The robot must interpret the human's speech and gesture and deliver the requested object to the human. The task then repeats with the remaining objects on the table. This task is achievable without social feedback; the robot need only wait until enough information is given and then deliver the correct object. However, we will show that by adding social feedback actions, such as asking questions, looking at objects, and pointing at objects, we will achieve better accuracy and speed as well as improved user experience. 
 
 \begin{figure}[t]
@@ -84,14 +82,9 @@ Specifically, we address the object delivery task. In this task, a set of object
 
 As an initial evaluation, we run our model in simulation to showcase improved speed and accuracy in the object delivery task. 
 
-
 \section{Related Work}
 
-\stnote{search and replace all cite with  citet or citep}
-
-\exwnote{The related works are a little out of date; they focus more on multimodal interpretation, even though this paper is more about modeling and action generation now}
-
-This work is primarily built off of \citet{eldon15thesis},\stnote{cite icra paper instead} which describes a system for incremental speech and gesture recognition in an object-delivery domain. In previous work\citep{socialfeedback}, the model from \citet{eldon15thesis} is expanded from a bayesian inference model into a POMDP model that can ask yes-no questions. In this work, we generalize the idea of the affect of robot's actions on humans state within a POMDP framework. 
+This work is primarily built off of \citet{whitney16}, which describes a system for incremental speech and gesture recognition in an object-delivery domain. In previous work\citep{socialfeedback}, the model from \citet{whitney16} is expanded from a bayesian inference model into a POMDP model that can ask yes-no questions. In this work, we generalize the idea of the affect of robot's actions on humans state within a POMDP framework. 
 
 Work demonstrating the importance of social feedback in human-human
 communication has been done in the field of psycholinguistics. In  \citet{clark04}, one human (labeled the builder)
@@ -123,13 +116,14 @@ POMDPs include cognitive architectures such as SOAR~\citep{soar} or
 DIARC~\citep{diarc}.  By taking a probabilistic approach, we can seamlessly
 fuse information from multiple sources and explicitly reason about the
 robot's uncertainty when choosing actions.
+
 \section{Technical Approach}
 
-\stnote{Put a few sentences here giving an overview.  no section/subsection without intro text}
+We begin with an overview of POMDPs, and then adapt that to our two-agent $\beta$-POMDP. We then construct a typical POMDP motivated by the structure of our $\beta$-POMDP. We describe the observation function and transition function of the POMDP with respect to the $\beta$-POMDP. 
 
 \subsection{POMDP Overview}
 
-Markov Decision Processes (MDPs) are models that describe how an agent can take actions to transition between states, receiving rewards for its actions. Partially Observable Markov Decision Processes (POMDPs) are used to model MDPs where the true state is not known. Instead, the agent receives observations that are generated by the true state, and must infer what the true state is from the observations. Thus, the agent maintains a belief over true states which is updated as it receives new observations. In subsequent sections, we will refer to this belief over hidden states as $b$. The agent must then use this belief state to determine which action to take to maximize its expected value of the reward over time. This splits the POMDP into two main components, a state estimator and a policy generator. A typical graphical model for a POMDP is provided in figure~\ref{fig:pomdp}.\stnote{cut this figure}
+Markov Decision Processes (MDPs) are models that describe how an agent can take actions to transition between states, receiving rewards for its actions. Partially Observable Markov Decision Processes (POMDPs) are used to model MDPs where the true state is not known. Instead, the agent receives observations that are generated by the true state, and must infer what the true state is from the observations. Thus, the agent maintains a belief over true states which is updated as it receives new observations. In subsequent sections, we will refer to this belief over hidden states as $b$. The agent must then use this belief state to determine which action to take to maximize its expected value of the reward over time. This splits the POMDP into two main components, a state estimator and a policy generator. A typical graphical model for a POMDP is provided in figure~\ref{fig:pomdp}.
 
 \tikzstyle{h} = [circle, draw, fill=white, minimum size=3em]
 \tikzstyle{a} = [diamond, draw, fill=gray!40, minimum size=3em]
@@ -168,9 +162,16 @@ Markov Decision Processes (MDPs) are models that describe how an agent can take 
 
 
 
-\subsection{Model Description}
+\subsection{$\beta$-POMDP}
 
-To model this human-robot interactive task, we will use a POMDP. To motivate the construction of our model, consider two-agent model constructed depicted in figure~\ref{fig:twoagent}. 
+In order to model human-robot interaction, we make the following assumptions. 
+
+\begin{itemize}
+	\item Both agents model uncertainty over the other agent's intentions and choose actions according to a POMDP.
+	\item Actions the human takes are interpreted as observations by the robot. Similarly, actions taken by the robot are interpreted as observations by the human. 
+\end{itemize}
+
+This allows us to construct the graphical model depicted in figure~\ref{fig:twoagent}. 
 
 \tikzstyle{h} = [circle, draw, fill=white, minimum size=3em]
 \tikzstyle{v} = [circle, draw, fill=gray!40, minimum size=3em]
@@ -211,12 +212,12 @@ To model this human-robot interactive task, we will use a POMDP. To motivate the
 		\path [line] (ohtm1) edge (st); 
 		\path [line] (oht) edge (stp1); 
 	\end{tikzpicture}
-	\caption{A two-agent model based off two POMDPs \stnote{Let's name this model and call it our model.}}
+	\caption{The two-agent $\beta$-POMDP model.}
 	\label{fig:twoagent}
 \end{center}
 \end{figure}
 
-We represent human states $s_t$, robot states $\sigma_\tau$, and observations generated by the robot $\omega_\tau$ and by the human $o_{t}$. Observe that the structure of this model resembles two POMDPs combined together at their actions and observations. The lower POMDP is the POMDP from the human's perspective: the robot has some hidden states $\sigma_\tau$, which the human observes by means of $\omega_{t}$. The human takes actions $o_{t}$ to influence the robot's state $\sigma_t$. The upper POMDP models the interaction from the robot's perspective: the human's state $s_t$ is hidden from the robot, and the robot must infer it from observations $o_{t}$. When the robot takes action $\omega_{\tau-1}$, it affects the human's state $s_t$. Crucially, each agent treats the other agent's action as an observation that influences their belief about the other agent's hidden state. Thus, the human's actions affect the robot's belief about the human's state, which is what we call $b$ above. Importantly, the reverse is also true: the robot's actions affect the human's belief about what the robot's hidden state is. We will call the human's belief over the robot's hidden state $\beta$. 
+We represent human states $s_t$, robot states $\sigma_\tau$, and observations generated by the robot $\omega_\tau$ and by the human $o_{t}$. The lower POMDP is the POMDP from the human's perspective: the robot has some hidden states $\sigma_\tau$, which the human observes by means of $\omega_{t}$. The human takes actions $o_{t}$ to influence the robot's state $\sigma_t$. The upper POMDP models the interaction from the robot's perspective: the human's state $s_t$ is hidden from the robot, and the robot must infer it from observations $o_{t}$. When the robot takes action $\omega_{\tau-1}$, it affects the human's state $s_t$. Because each agent treats the other agent's action as an observation, when the robot takes an action, it will influence the human's belief about the robot's hidden state, and vice versa. Thus, the human's actions affect the robot's belief about the human's state, which is what we call $b$ above. Importantly, the reverse is also true: the robot's actions affect the human's belief about what the robot's hidden state is. We will call the human's belief over the robot's hidden state $\beta$. 
 
 
 In the following section we will use this dual structure to inform the construction of our POMDP as applied to our object delivery domain. 
@@ -241,9 +242,9 @@ We define our object-delivery POMDP as a tuple $\{S, A, T, R, \Omega, O\}$:
 \end{itemize}
 
 For quick reference, a table of variables is provided in figure~\ref{fig:vars}. 
-\stnote{Make this much smaller; use smaller font.}
 \begin{figure*}
 	\begin{center}
+		\footnotesize
 		\begin{tabular}{r l}
 			\hline
 			Variable & Explanation\\
@@ -280,7 +281,7 @@ According to our double-agent model, the human emits observations as though it w
 
 \paragraph{Base-Level Observation Function} \label{baseobs}
 
-The base level observation function describes the probability of an observation conditioned only on the object: $p(o|\iota)$. For our object delivery domain, we will define two base-level observations, one for language and one for gesture. These observation functions are the ones defined in~\citet{eldon15thesis}. 
+The base level observation function describes the probability of an observation conditioned only on the object: $p(o|\iota)$. For our object delivery domain, we will define two base-level observations, one for language and one for gesture. These observation functions are the ones defined in~\citet{whitney16}. 
 
 \vspace{0.5em}
 
@@ -305,8 +306,7 @@ where $v$ is a hand-tuned variance. We choose $v = 0.4$.
 
 \paragraph{Posterior Observation Function}
 
-We will use the base-level observation function defined above to define a posterior observation function that considers how the base-level observation function will affect the robot's belief. Specifically, because the human is a rational agent, they will choose to generate an observation that has the greatest probability of the robot handing them their desired object $\iota$. 
-
+We will use the base-level observation function defined above to define a posterior observation function that considers how the base-level observation function will affect the robot's belief. Specifically, because we assume the human is solving a POMDP the same way the robot is, they will pick the most optimal action. Instead of calculating what the most optimal action is, we will use a heuristic: the best action for the human to take (or the best observation for them to generate) is the action that results in the greatest probability of the robot handing them their desired object $\iota$. 
 
 \begin{equation*} 
 	p(o | \iota, \beta) = \begin{cases}
@@ -338,140 +338,11 @@ To account for suboptimal behavior and avoid irregularities in our observation f
 
 Using $\beta$ as a prior for our observation function incentivizes the robot to take actions that modify $\beta$ in such a way that increase the probability of useful observations, while in turn decreasing the probability of getting observations that tell the robot things it already knows. This result falls out of our assumption that the human is more likely to provide observations that communicate its intentions to the robot well. Consider the following example: 
 
+The robot has four objects within reach: a red bowl, a blue bowl, a red cup, and a blue cup. Of the four objects, the human desires the red bowl. They tell the robot they would like a bowl. At this point, the robot can choose to take an action or wait. 
 
-First, we will define a toy domain. In this toy domain, the states are the following: $\{AA, AB, BA, BB\}$ as well as $\beta$, which is a distribution over these states. The observations are $\{A\_, \_A, B\_, \_B\}$, which mean ``the first character is an A'', ``the second character is an A'', ``the first character is B'', ``and the second character is a B'' respectively. These observations are provided by the human. The agent can take actions $CX$ which is informing the human that the agent believes the Xth character is a C, as well as ``picking'' the object or waiting. For the base level observation, the human always gives truthful observations, and has equal probability of generating an observation pertaining to a particular character. We will see how this affects the POMDP observation function, which incorporates $\beta$. 
+If the robot chooses to wait, the human's belief about what the robot knows remains uniform. Thus, according to the human, it is equally helpful for them to tell the robot the color of the bowl is red or to repeat themselves and say they would like a bowl. This is suboptimal for the robot, because there is a 50\% chance the robot will receive an observation that tells them no new information. 
 
-Consider the following situation: 
-
-Initially both $b$, the robot's belief about the human's desired object and $\beta$, the human's belief about the robot's belief, are uniform. The true state is $AA$. 
-
-\begin{center}
-	\footnotesize
-\begin{tabular}{|c| c| c| c | c|}
-	\hline
-	$t$ & $b$ & $\beta$ & $a$ & $o$ \\
-	\hline
-	$0$ & [0.25, 0.25, 0.25, 0.25] & [0.25, 0.25, 0.25, 0.25] & & \\
-	\hline
-\end{tabular}
-\end{center}
-
-
-The robot then receives an observation $A\_$. The new beliefs are: 
-
-\begin{center}
-	\footnotesize
-\begin{tabular}{|c| c| c| c | c|}
-	\hline
-	$t$ & $b$ & $\beta$ & $a$ & $o$ \\
-	\hline
-	$0$ & [0.25, 0.25, 0.25, 0.25] & [0.25, 0.25, 0.25, 0.25] & & \\
-	\hline
-	$1$ & [0.50, 0.50, 0, 0] & [0.25, 0.25, 0.25, 0.25] & & $A\_$ \\
-	\hline
-\end{tabular}
-\end{center}
-
-Next, the robot can choose to take an action. If it chooses to wait, this is the resulting state
-
-
-\begin{center}
-	\footnotesize
-\begin{tabular}{|c| c| c| c | c|}
-	\hline
-	$t$ & $b$ & $\beta$ & $a$ & $o$ \\
-	\hline
-	$0$ & [0.25, 0.25, 0.25, 0.25] & [0.25, 0.25, 0.25, 0.25] & & \\
-	\hline
-	$1$ & [0.50, 0.50, 0, 0] & [0.25, 0.25, 0.25, 0.25] & & $A\_$ \\
-	\hline
-	$2$ & [0.50, 0.50, 0, 0] & [0.25, 0.25, 0.25, 0.25] & wait  &  \\
-	\hline
-\end{tabular}
-\end{center}
-
-Examine the probabilities of each observation.
-
-\begin{align*}
-	p(A\_ | AA, \beta) &= \frac{ p(A\_)\beta(AA) }{ \sum_{h \in \{AA, AB, BA, BB\}} p(A\_ | h) } \\
-	&= \frac{0.5 * 0.25}{0.5 * 0.25 + 0.5 * 0.25 + 0 + 0} \\
-	&= 0.5
-\end{align*}
-
-\begin{align*}
-	p(\_A | AA, \beta) & \\
-	&= \frac{ p(\_A)\beta(AA) }{ \sum_{h \in \{AA, AB, BA, BB\}} p(\_A | h) } \\
-	&= \frac{0.5 * 0.25}{0.5 * 0.25 + 0 + 0.5 * 0.25 + 0} \\
-	&= 0.5
-\end{align*}
-
-The probabilities of all other actions are 0, since we only give truthful observations.
-
-Notice that this situation is not ideal. According to the human, producing each of these observations equally optimal, so we are equally likely to see either observation in this situation, even though the agent already knows that the first character is an A. Now, consider what would happen if the robot chose the action $A0$. We would get the following belief states: 
-
-
-\begin{center}
-	\footnotesize
-\begin{tabular}{|c| c| c| c | c|}
-	\hline
-	$t$ & $b$ & $\beta$ & $a$ & $o$ \\
-	\hline
-	$0$ & [0.25, 0.25, 0.25, 0.25] & [0.25, 0.25, 0.25, 0.25] & & \\
-	\hline
-	$1$ & [0.50, 0.50, 0, 0] & [0.25, 0.25, 0.25, 0.25] & & $A\_$ \\
-	\hline
-	$2$ & [0.50, 0.50, 0, 0] & [0.5, 0.5, 0, 0] & $A0$  &  \\
-	\hline
-\end{tabular}
-\end{center}
-
-If we examine the probabilities again: 
-
-\begin{align*}
-	p(A\_|AA, \beta) & \\
-	&= \frac{ p(A\_)\beta(AA) }{ \sum_{h \in \{AA, AB, BA, BB\}} p(A\_ | h) } \\
-	&= \frac{0.5 * 0.5}{0.5 * 0.5 + 0.5 * 0.5 + 0 + 0} \\
-	&= 0.5 \\
-\end{align*}
-
-\begin{align*}
-	p(\_A|AA, \beta) &\propto \frac{ p(\_A)\beta(AA) }{ \sum_{h \in \{AA, AB, BA, BB\}} p(\_A | h) } \\
-	&= \frac{0.5 * 0.5}{0.5 * 0.5 + 0 + 0 + 0} \\
-	&= 1 \\
-\end{align*}
-
-
-Now, observation $\_A$ is the most optimal, so there is high probability the human will generate this observation for the robot. This observation will give the robot the information it needs to pick the correct object, $AA$. This provides an incentive for the robot to choose an action that conveys something about its current state of belief over doing nothing. 
-
-\paragraph{Modification for Object Delivery Domain}
-
-
-In the object delivery domain, we have both speech and gesture, which we assume are conditionally independent given the state. 
-
-$$p(o|s) = p(l, g | s) =  p(l|s)p(g|s)$$
-
-In addition, it is possible to observe no speech or no gesture input. Let $L$ be a random variable that is 1 if the agent receives a language observation and 0 otherwise. Similarly, let $G$ be a random variable that is 1 if the agent receives a gesture observation and 1 otherwise. For all states $s$: 
-
-\begin{align*}
-	p(L = 1 | s) &= c_L \\
-	p(L = 0 | s) &= 1 - c_L 
-\end{align*}
-
-\begin{align*}
-	p(G = 1 | s) &= c_G \\
-	p(G = 0 | s) &= 1 - c_G 
-\end{align*}
-
-where $c_L$ and $c_G$ are constant values less than 1. 
-
-We will use a separate posterior observation function for language and gesture. Combined with the probability to receive a null speech or null gesture observation, the full expression is as follows: 
-
-
-
-\begin{align*}
-	p&(o|s) = \eta p(l|s) p(g|s)  \\
-	 &= \eta p(L|s) p(l|\iota,\beta) ^ L \cdot p(G|s) p(g|\iota,\beta)^G
-\end{align*}
+However, if the robot chooses to inform the human that the robot knows they would like a bowl, the human now knows that the best observation they can take is to inform the robot that the object they like is red. Thus, if the robot chooses to give the human feedback, with extremely high probability, they will receive a useful observation and be able to complete the interaction. 
 
 
 
@@ -596,21 +467,9 @@ $$p(a_{t} = \texttt{point(x)} | \iota_{t+1}) = \mathcal{N}(\phi_p | 0, v_{p})$$
 
 Actions $\texttt{say(p)}$ take the form of a statement ``I believe that the object you want is $p$'', where $p$ is some property from some object's vocabulary. The probability of this action given some $\iota$ is identical to the speech model for the human, given in section~\ref{baseobs}. 
 
-\subsection{Policy Generation}
-
-\exwnote{Will rewrite this depending on whether we use POSS or not. If not, this section will probably removed or changed to say only BSS was used}
-
-It is possible to calculate an optimal policy to solve our POMDP, however, due its size, doing so is intractable. Moreover, we would like to solve our POMDP at speeds suitable for interaction. Fortunately, approximate solutions exist which allow us to trade off accuracy for computational time. One such solver is the Partially Observable Sparse Sampling (POSS) algorithm \citep{Gopalan2016}, which uses Monte-Carlo Tree Search~\citep{coulom2006efficient} and Upper Confidence Bound exploration~\citep{kocsis2006bandit} to derive a policy for our POMDP. In order to improve the accuracy of the planner, we also provide a heuristic for the random rollouts that prevents the rollouts from selecting pick actions that are unlikely to select the correct objects. 
-
-We implement this model within the Brown UMBC Reinforcement Learning And Planning~\citep{burlap} framework, which allows for many standard AI and Reinforcement learning algorithms to be used with our domain. 
-
 \section{Evaluation}
 
-We use Belief Sparse Sampling~\citep{bss} (BSS) to solve our domain to evaluate the efficacy of our model. BSS takes several minutes to generate an action, which is too slow for user interaction. Instead, we evaluate the performance of our model in simulation. A procedure for user studies with human participants is also described.\footnote{We do note that it would be possible to run the full domain in real time to test with users by precomputing and caching a policy for each belief state that describes the optimal action to take from that state. This is the scheme that we used in \cite{socialfeedback}}
-
-\subsection{Results in Simulation}
-
-We run 25 trials in simulation. Results are presented in figure \ref{fig:toyresults}. We see a reduction in the number of actions needed until the robot can successfully pick the correct object, while accuracy remains the same. With only six objects, it is easy to identify the correct object with enough observations, accounting for the high accuracy in both trials. However, taking social feedback actions allows the agent to request the observations that it needs from the human to complete the interaction as quickly as possible. Notice also that the variance in the number of actions the robot takes until the first correct pick is very small in the social trials, while it is very large in the non-social trials. Social feedback actions allow the agent to control the interaction so that it is as brief as possible. 
+We use Belief Sparse Sampling~\citep{bss} (BSS) to solve our domain to evaluate the efficacy of our model in simulation. We run 25 trials, results for which are presented in figure \ref{fig:toyresults}. We see a reduction in the number of actions needed until the robot can successfully pick the correct object, while accuracy remains the same. With only six objects, it is easy to identify the correct object with enough observations, accounting for the high accuracy in both trials. However, taking social feedback actions allows the agent to request the observations that it needs from the human to complete the interaction as quickly as possible. Notice also that the variance in the number of actions the robot takes until the first correct pick is very small in the social trials, while it is very large in the non-social trials. Social feedback actions allow the agent to control the interaction so that it is as brief as possible. 
 
 \begin{figure}[H]
 \begin{center}
@@ -629,7 +488,7 @@ We would also like to expand the domain by allowing for more modalities of user 
 
 In the future, we will investigate more sophisticated observation functions, allowing for language interpretation that can understand prepositional phrases and other ways of composing referring expressions. 
 
-Other areas for further exploration can be found by removing many of the assumptions made in this thesis. For example, the set of objects on the table was assumed to be known. Attempting to learn from the human more about the set of objects, such as their vocabularies and location, would be an interesting expansion. 
+Other areas for further exploration can be found by removing many of the assumptions made in this paper. For example, the set of objects on the table was assumed to be known. Attempting to learn from the human more about the set of objects, such as their vocabularies and location, would be an interesting expansion. 
 
 Use of the $\beta$ variable can be expanded to include uncertainty over the value of $\beta_t$, allowing for ambiguity in how the human interprets the robot's action. In the same vein, additional modes of interaction from both the robot and human can be explored. 
 
@@ -639,15 +498,7 @@ The object delivery domain can also be abstracted to a domain where the goal is 
 
 \section{Acknowledgements}
 
-\exwnote{I may remove this section, unless there is more to add}
-
-This thesis is the result of work that has been ongoing since December 2014, including a AAAI workshop paper, \cite{socialfeedback}.  I would like to acknowledge my many collaborators, Advik Guha, Miles Eldon, David Whitney, Horatio Han, Nakul Gopalan, Lawson Wong, James MacGlashan, and John Oberlin. 
-
-This project is part of an ongoing initiative towards social robotics by Brown University's H2R laboratory under Professor Stefanie Tellex. 
-
-
-
-\newpage
+This material is based upon work supported by the  DARPA under the grant D15AP00102.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
