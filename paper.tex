@@ -63,20 +63,21 @@ Robotic collaboration requires not just communication from the human to the robo
 
 Collaboration is a process that relies heavily on communication for its success. When humans collaborate, this communication is both obvious and implicit---we not only instruct and request aid from each other, but we also tacitly monitor our partners for signs of approval and understanding while producing these signals ourselves. However, in robotics, many of these vital components of successful communication are missing or lost. The absence of these signals likely account for numerous failures in human-robot collaborative tasks. In order to give robots these missing communicative skills, we employ \emph{social feedback} signals to provide human-like communication to both inform the human participant of the robot's state and request information from the participant. 
 
-Feedback refers to the responses that are received by an agent when it takes some action. These feedback responses inform the agent about the success or failure of its actions. \emph{Social feedback} therefore refers to social signals that convey this information. These can be explicit signals, such as ``I want this object'', or implicit signals, such as a perplexed expression. When humans interact with another human, they use this feedback to improve the flow and clarity of the collaboration, which in turn improves its success. For my thesis work, I have developed a framework that describes how robotic agent should likewise generate social feedback for its human partner in human-collaborative tasks, and show that it improves the speed and accuracy of human-robot interaction. 
+Feedback refers to the responses that are received by an agent when it takes some action. These feedback responses inform the agent about the success or failure of its actions. \emph{Social feedback} therefore refers to social signals that convey this information. These can be explicit signals, such as ``I want this object,'' or implicit signals, such as a perplexed expression. When humans interact with another human, they use this feedback to improve the flow and clarity of the collaboration, which in turn improves its success. In this paper, we describe a  framework that describes how robotic agent should likewise generate social feedback for its human partner in human-collaborative tasks, and show that it improves the speed and accuracy of human-robot interaction. 
 
-Many existing works focus on the task of interpreting human communications\citep{tellex11,matuszek12,tellex12,misra14}, but provide no response if the interpretation fails. As a consequence, it becomes difficult to tell whether the robot is still making progress in interpreting the request, or has failed. Some works do allow for robotic responses to ambiguous situations, but the manner of their responses are hard coded, often limited to generic requests, such as ``please repeat the question''. In this work, we provide a means to generate these requests in the form of language and gesture that can flexibly represent the robot's state as well as inform the human in such a way so that allows the human to help the robot as much as possible. 
+Many existing works focus on the task of interpreting human communications\citep{tellex11,matuszek12,tellex12,misra14}, but provide no response if the interpretation fails. As a consequence, it becomes difficult to tell whether the robot is still making progress in interpreting the request, or has failed. Some works do allow for robotic responses to ambiguous situations, but the manner of their responses are hard coded, often limited to generic requests, such as ``please repeat the question.'' In this work, we provide a means to generate these requests in the form of language and gesture that can flexibly represent the robot's state as well as inform the human in such a way so that allows the human to help the robot as much as possible. 
+
+We will solve this problem by formulating it as a Partially Observable Markov Decision Process (POMDP)\citep{kaelbling99}, which will allow us to dynamically and flexibly determine how to choose social feedback actions. First, we will describe a two agent model and use this to motivate the construction of a POMDP. The crucial improvement we make over existing robot interaction models is that we maintain a state variable that tracks the human's interpretations of the actions the robot takes. We will next discuss how we solved this POMDP and other measures we took to allow our system to respond dynamically and fluidly. 
 
 Specifically, we address the object delivery task. In this task, a set of objects are laid out on a table within a Baxter robot's reach. A human participant requests an object from the robot using speech and gesture (pointing). The robot must interpret the human's speech and gesture and deliver the requested object to the human. The task then repeats with the remaining objects on the table. This task is achievable without social feedback; the robot need only wait until enough information is given and then deliver the correct object. However, we will show that by adding social feedback actions, such as asking questions, looking at objects, and pointing at objects, we will achieve better accuracy and speed as well as improved user experience. 
 
-\begin{figure}[H]
+\begin{figure}[t]
 	\begin{center}
 		\includegraphics[scale=0.17]{resources/firstPerson}
 		\caption{The experimental setup from the participant's perspective: a Baxter robot has six objects within reach. The participant stands in front of the table to provide speech and gesture requests}
 	\end{center}
 \end{figure}
 
-We will solve this problem by formulating it as a Partially Observable Markov Decision Process (POMDP)\citep{kaelbling99}, which will allow us to dynamically and flexibly determine how to choose social feedback actions. First, we will describe a two agent model and use this to motivate the construction of a POMDP. The crucial improvement we make over existing robot interaction models is that we maintain a state variable that tracks the human's interpretations of the actions the robot takes. We will next discuss how we solved this POMDP and other measures we took to allow our system to respond dynamically and fluidly. 
 
 As an initial evaluation, we run our model in simulation to showcase improved speed and accuracy in the object delivery task. 
 
@@ -119,8 +120,8 @@ dialog understanding, treats dialog in this turn-based way. Our model is also ba
 Interactive POMDPs (I-POMDPs)~\citep{gmytrasiewicz2005framework} describe a multi-agent POMDP that allows agents to anticipate each other's actions by forming beliefs over action and observation histories. This work attempts to accomplish the same, but makes more specialized assumptions that allow for a more tractable state space. 
 
 Alternative approaches to
-POMDPs include cognitive architecutres such as SOAR~\citep{soar} or
-DIARC~\citep{diarc}.  By taking a probabilistic approach, we can seemlessly
+POMDPs include cognitive architectures such as SOAR~\citep{soar} or
+DIARC~\citep{diarc}.  By taking a probabilistic approach, we can seamlessly
 fuse information from multiple sources and explicitly reason about the
 robot's uncertainty when choosing actions.
 \section{Technical Approach}
@@ -232,9 +233,9 @@ We define our object-delivery POMDP as a tuple $\{S, A, T, R, \Omega, O\}$:
 		\end{itemize}
 		Since our state is composed of both hidden and known states, it resembles a Mixed Observability MDP~\citep{momdp}, and we leverage the computational benefits of having both hidden and known states. 
 	\item The set of actions A consists of both social and non-social actions. Non-social actions are \texttt{pick(i)} (picking up  and delivering an object $i$) and \texttt{wait}. Social actions are \texttt{point(x)}, pointing at a location $x$; \texttt{look(x)}, looking at a location $x$;\footnote{$x$ is chosen from the set of points that describe the surface of the table. For computational reasons, in this work, we restrict it to the set of object locations} and \texttt{say(p)}, informing the human that the robot believes the desired object has property $p$, where $p$ is an element of some object's vocabulary. 
-	\item $T(s, a, s^\prime) = p(s^\prime | s, a)$. We make the assumption that the human's desired object $\iota$ does not change unless the robot picks up object $\iota$. The set of all objects $\Iota$ transistions to $\Iota \setminus \{i\}$ when the robot chooses action \texttt{pick(i)}. For each action in $A$, we define a ``reverse observation function'' that describes our assumptions about how the human imagines the robot generates actions (which the human sees as observations) given a hidden robot state. This allows us to define a transition function for $\beta$. The transition dynamics are described in greater detail in section  \ref{sssec:tf}. 
+	\item $T(s, a, s^\prime) = p(s^\prime | s, a)$. We make the assumption that the human's desired object $\iota$ does not change unless the robot picks up object $\iota$. The set of all objects $\Iota$ transitions to $\Iota \setminus \{i\}$ when the robot chooses action \texttt{pick(i)}. For each action in $A$, we define a ``reverse observation function'' that describes our assumptions about how the human imagines the robot generates actions (which the human sees as observations) given a hidden robot state. This allows us to define a transition function for $\beta$. The transition dynamics are described in greater detail in section  \ref{sssec:tf}. 
 	\item $R(s, a, s^\prime)$ returns a numeric reward from transitioning from $s$ to $s^\prime$ by taking action $a$. In this domain, we incentivize our robot to pick the correct object by giving it a $+10$ reward if it delivers the correct object and a $-50$ reward for picking the incorrect object. We also give negative rewards for taking various actions: \texttt{wait} receives a $-1$ reward (to incentivize the robot to finish the task quickly); \texttt{look(x)} receives a reward of $-2$; \texttt{say(p)} receives a reward of $-3$; \texttt{point(x)}  receives a reward of $-4$. These additional penalties for social actions reflect the penalty for ``bothering the user'', as well as the time it takes to execute these actions. These reward values were chosen experimentally to result in a high rate of pick accuracy. 
-	\item Observation $o \in \Omega$ represents an observation generated by the human. These are tuples of language and gesture: $\langle l, g \rangle$. Language utterance $l$ is represented by a string of any number of words, obtained by transcribing microphone input using webkit's speech recognition API through google chrome.  A gesture $g$ is represented by a vector from the participant's shoulder to their wrist, and all gestures are interpreted as a straight-armed point. This vector is obtained using the Kinect's tracking software. 
+	\item Observation $o \in \Omega$ represents an observation generated by the human. These are tuples of language and gesture: $\langle l, g \rangle$. Language utterance $l$ is represented by a string of any number of words, obtained by transcribing microphone input using webkit's speech recognition API through Google Chrome.  A gesture $g$ is represented by a vector from the participant's shoulder to their wrist, and all gestures are interpreted as a straight-armed point. This vector is obtained using the Kinect's tracking software. 
 	\item $O(o, s, a) = p(o |s, a)$ describes the probability of of seeing an observation $o$ from the human given their state $s$ and the robot's last action $a$ (though assume all observations are independent of $a$). We choose an observation function that reflects that the human is an agent attempting to communicate which object they desire to the robot, and thus chooses to generate observations that are more likely to result in the robot delivering the correct object. This is gone into more detail in the next section, section \ref{sssec:of}. 
 \end{itemize}
 
@@ -325,7 +326,7 @@ Next, we will set $p(\iota) = \beta(\iota)$. $p(\iota)$ describes the robot's be
 
 $$p(i|o) = \eta \frac{p(o|\iota) \beta(\iota)}{\sum_{\iota^\prime} p(o|\iota^\prime)\beta(\iota^\prime)} $$
 
-To account for suboptimal behavior and avoid irregularities in our observation function, we soften our assumptions of optimality such that $1-\epsilon$ fraction of the time, the human chooses the optimal action. With probability $\epsilon$ they pick acccording to the base-level observation function described above. 
+To account for suboptimal behavior and avoid irregularities in our observation function, we soften our assumptions of optimality such that $1-\epsilon$ fraction of the time, the human chooses the optimal action. With probability $\epsilon$ they pick according to the base-level observation function described above. 
 
 \begin{equation*} 
 	p(o | \iota, \beta) = \begin{cases}
@@ -337,11 +338,11 @@ To account for suboptimal behavior and avoid irregularities in our observation f
 Using $\beta$ as a prior for our observation function incentivizes the robot to take actions that modify $\beta$ in such a way that increase the probability of useful observations, while in turn decreasing the probability of getting observations that tell the robot things it already knows. This result falls out of our assumption that the human is more likely to provide observations that communicate its intentions to the robot well. Consider the following example: 
 
 
-First, we will define a toy domain. In this toy domain, the states are the following: $\{AA, AB, BA, BB\}$ as well as $\beta$, which is a distribution over these states. The observations are $\{A\_, \_A, B\_, \_B\}$, which mean ``the first character is an A'', ``the second character is an A'', ``the first character is B'', ``and the second character is a B'' respectively. These observations are provided by the human. The agent can take actions $CX$ which is informing the human that the agent believes the Xth character is a C, as well as ``picking'' the object or waiting. For the basel level observation, the human always gives truthful observations, and has equal probability of generating an observation pertaining to a particular character. We will see how this affects the POMDP observation function, which incorporates $\beta$. 
+First, we will define a toy domain. In this toy domain, the states are the following: $\{AA, AB, BA, BB\}$ as well as $\beta$, which is a distribution over these states. The observations are $\{A\_, \_A, B\_, \_B\}$, which mean ``the first character is an A'', ``the second character is an A'', ``the first character is B'', ``and the second character is a B'' respectively. These observations are provided by the human. The agent can take actions $CX$ which is informing the human that the agent believes the Xth character is a C, as well as ``picking'' the object or waiting. For the base level observation, the human always gives truthful observations, and has equal probability of generating an observation pertaining to a particular character. We will see how this affects the POMDP observation function, which incorporates $\beta$. 
 
 Consider the following situation: 
 
-Intially both $b$, the robot's belief about the human's desired object and $\beta$, the human's belief about the robot's belief, are uniform. The true state is $AA$. 
+Initially both $b$, the robot's belief about the human's desired object and $\beta$, the human's belief about the robot's belief, are uniform. The true state is $AA$. 
 
 \begin{center}
 	\footnotesize
@@ -614,7 +615,7 @@ We run 25 trials in simulation. Results are presented in figure \ref{fig:toyresu
 \begin{center}
 	\includegraphics[width=0.45\textwidth]{resources/results}
 \end{center}
-\caption{Results in simulation. \texttt{turns\_until\_pick} is the number of timesteps until first correct pick,  \texttt{pick\_acc} is the ratio of correct picks to total picks, \texttt{avg\_time} is the the time to compute a single action}
+\caption{Results in simulation. \texttt{turns\_until\_pick} is the number of timesteps until first correct pick,  \texttt{pick\_acc} is the ratio of correct picks to total picks, \texttt{avg\_time} is the time to compute a single action}
 	\label{fig:toyresults}
 \end{figure}
 
@@ -635,7 +636,7 @@ The next task will be to run user-studies with human participants to compare the
 
 We would also like to expand the domain by allowing for more modalities of user input, such as other types of gestures as well as more subtle cues such as expression or emotion. 
 
-This thesis work relies on very simple observation functions. In the future, we will investigate more sophisticated observation functions, allowing for language interpretation that can understand prepositional phrases and other ways of composing referring expressions. 
+In the future, we will investigate more sophisticated observation functions, allowing for language interpretation that can understand prepositional phrases and other ways of composing referring expressions. 
 
 Other areas for further exploration can be found by removing many of the assumptions made in this thesis. For example, the set of objects on the table was assumed to be known. Attempting to learn from the human more about the set of objects, such as their vocabularies and location, would be an interesting expansion. 
 
@@ -646,6 +647,8 @@ The object delivery domain can also be abstracted to a domain where the goal is 
 
 
 \section{Acknowledgements}
+
+\exwnote{I may remove this section, unless there is more to add}
 
 This thesis is the result of work that has been ongoing since December 2014, including a AAAI workshop paper, \cite{socialfeedback}.  I would like to acknowledge my many collaborators, Advik Guha, Miles Eldon, David Whitney, Horatio Han, Nakul Gopalan, Lawson Wong, James MacGlashan, and John Oberlin. 
 
