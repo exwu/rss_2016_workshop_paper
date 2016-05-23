@@ -33,36 +33,18 @@
 \title{Social Feedback For Robotic Collaboration}
 \author{Author Names Omitted for Anonymous Review. Paper-ID [add your ID here]}
 
+%\author{\authorblockN{Emily Wu, Nakul Gopalan, James MacGlashan, Stefanie Tellex, and Lawson L.S. Wong }
+%\authorblockA{Brown University}}
+
 \maketitle
 
 
-%\author{\authorblockN{Michael Shell}
-%\authorblockA{School of Electrical and\\Computer Engineering\\
-%Georgia Institute of Technology\\
-%Atlanta, Georgia 30332--0250\\
-%Email: mshell@ece.gatech.edu}
-%\and
-%\authorblockN{Homer Simpson}
-%\authorblockA{Twentieth Century Fox\\
-%Springfield, USA\\
-%Email: homer@thesimpsons.com}
-%\and
-%\authorblockN{James Kirk\\ and Montgomery Scott}
-%\authorblockA{Starfleet Academy\\
-%San Francisco, California 96678-2391\\
-%Telephone: (800) 555--1212\\
-%Fax: (888) 555--1212}}
-
-
-
 \begin{abstract}
-Robotic collaboration requires not just communication from the human to the robot, but also from the robot to the human. \stnote{Needs to get at the idea of speed and accuracy, that the robot needs to respond quickly, that the person is hard to understand.  Social feedback is our solution to a problem so you have to open with the problem.}   We call this robot-to-human communication \emph{social feedback}. In order to flexibly and intelligently generate social feedback, we present a partially Observable Markov Decision Process\stnote{name the model} that incorporates the human's belief about the robot's intent. Doing so incentivizes the robot to communicate its current state \stnote{using language and gesture} in order to allow the human participant to make informed decisions about their next actions. Initial evaluation in simulation shows \stnote{decreased interaction times} \stnote{cut: improvement in interaction length} in a simulated domain while maintaining near-perfect accuracy. 
+	Interacting with a robot is challenging because of imperfect robotic perception and the difficulty of knowing what the robot is currently thinking. In order to address these problems, robotic collaboration must include not just communication from the human to the robot, but also from the robot to the human. We call this robot-to-human communication \emph{social feedback}. In order to flexibly and intelligently generate social feedback, we present a model based off a Partially Observable Markov Decision Processs (POMDP) called a $\beta$-POMDP model that incorporates the human's belief about the robot's intent. Doing so incentivizes the robot to communicate its current state using language and gesture in order to allow the human participant to make informed decisions about their next action. Initial evaluation in simulation shows decreased interaction time in a simulated domain while maintaining near-perfect accuracy. 
 \end{abstract}
 
 	
 \section{Introduction}
-
-\exwnote{add figure with example, 3-5 sentence summary at very end of introduction, extended description in figure caption}
 
 Collaboration is a process that relies heavily on communication for its success. When humans collaborate, this communication is both obvious and implicit---we not only instruct and request aid from each other, but we also tacitly monitor our partners for signs of approval and understanding while producing these signals ourselves. However, in robotics, many of these vital components of successful communication are missing or lost. The absence of these signals likely account for numerous failures in human-robot collaborative tasks. In order to give robots these missing communicative skills, we employ \emph{social feedback} signals to provide human-like communication to both inform the human participant of the robot's state and request information from the participant. In this paper, we describe a  framework that describes how robotic agent should likewise generate social feedback for its human partner in human-collaborative tasks, and show that it improves the speed and accuracy of human-robot interaction. 
 
@@ -82,11 +64,24 @@ Specifically, we address the object delivery task. In this task, a set of object
 
 
 
-As an initial evaluation, we run our model in simulation to showcase improved speed and accuracy in the object delivery task. 
+As an initial evaluation, we run our model in simulation to showcase improved speed while maintaining accuracy in the object delivery task. 
+
+In the object-delivery task, our social-feedback framework allows the task to be completed more quickly by allowing the robot to be an active participant in the collaboration. For example, if the human asks the robot for a bowl, but there are many bowls of different colors available, if the robot communicates that it knows the human wants a bowl, this lets the human know it must next specify the color of the bowl. An in-depth explanation is provided in figure~\ref{example}. 
+
+\begin{figure*}
+	\begin{center}
+		\includegraphics[scale=0.6]{resources/diagram}
+		\caption{
+The robot has four objects within reach: a red bowl, a blue bowl, a red cup, and a blue cup. Of the four objects, the human desires the red bowl. They tell the robot they would like a bowl. In response, the robot can choose to take an action or wait. 
+If the robot chooses to wait, the human's belief about what the robot knows remains uniform. According to the human, it is equally helpful for them to tell the robot the color of the bowl is red or to repeat themselves and say they would like a bowl.  
+However, if the robot chooses to inform the human that the robot knows they would like a bowl, the human now knows that the best observation they can take is to inform the robot that the object they would like is red. }
+		\label{example}
+	\end{center}
+\end{figure*}
 
 \section{Related Work}
 
-This work is primarily built off of \citet{whitney16}, which describes a system for incremental speech and gesture recognition in an object-delivery domain. In previous work\citep{socialfeedback}, the model from \citet{whitney16} is expanded from a bayesian inference model into a POMDP model that can ask yes-no questions. In this work, we generalize the idea of the affect of robot's actions on humans state within a POMDP framework. 
+This work is primarily built off of \citet{whitney16}, which describes a system for incremental speech and gesture recognition in an object-delivery domain. In previous work\citep{socialfeedback}, the model from \citet{whitney16} is expanded from a Bayesian inference model into a POMDP model that can ask yes-no questions. In this work, we generalize the idea of the affect of robot's actions on humans state within a POMDP framework. 
 
 Work demonstrating the importance of social feedback in human-human
 communication has been done in the field of psycholinguistics. In  \citet{clark04}, one human (labeled the builder)
@@ -125,44 +120,7 @@ We begin with an overview of POMDPs, and then adapt that to our two-agent $\beta
 
 \subsection{POMDP Overview}
 
-\stnote{cite}
-Markov Decision Processes (MDPs) are models that describe how an agent can take actions to transition between states, receiving rewards for its actions. Partially Observable Markov Decision Processes (POMDPs) are used to model MDPs where the true state is not known. Instead, the agent receives observations that are generated by the true state, and must infer what the true state is from the observations. Thus, the agent maintains a belief over true states which is updated as it receives new observations. In subsequent sections, we will refer to this belief over hidden states as $b$. The agent must then use this belief state to determine which action to take to maximize its expected value of the reward over time. This splits the POMDP into two main components, a state estimator and a policy generator. A typical graphical model for a POMDP is provided in figure~\ref{fig:pomdp}.
-
-\tikzstyle{h} = [circle, draw, fill=white, minimum size=3em]
-\tikzstyle{a} = [diamond, draw, fill=gray!40, minimum size=3em]
-\tikzstyle{v} = [circle, draw, fill=gray!40, minimum size=3em]
-\tikzstyle{line} = [draw, > = stealth, -latex]
-
-
-\begin{figure}[H]
-\begin{center}
-	\begin{tikzpicture}[node distance = 1.7cm, auto]
-		%actions
-		\node [v] (ort) {$o_{t}$};
-		\node [a, right of=ort] (oht) {$a_{t}$};
-		\node [v, right of=oht] (ortp1) {$o_{t+1}$}; 
-		\node [a, left of=ort] (ohtm1) {$a_{t-1}$};
-		\node [v, left of=ohtm1] (ortm1) {$o_{t-1}$};
-		% states
-		\node [h, above of=ort] (st) {$s_t$}; 
-		\node [h, above of=ortm1] (stm1) {$s_{t-1}$}; 
-		\node [h, above of=ortp1] (stp1) {$s_{t+1}$}; 
-		% edges; state -> obs
-		\path [line] (st) edge (ort); 
-		\path [line] (stm1) edge (ortm1); 
-		\path [line] (stp1) edge (ortp1); 
-		% state -> state
-		\path [line] (stm1) edge (st); 
-		\path [line] (st) edge (stp1); 
-		% a -> state
-		\path [line] (ohtm1) edge (st); 
-		\path [line] (oht) edge (stp1); 
-	\end{tikzpicture}
-\caption{A graphical model representation of a POMDP \stnote{cut}}
-\label{fig:pomdp}
-\end{center}
-\end{figure}
-
+Markov Decision Processes (MDPs)\cite{Bel} are models that describe how an agent can take actions to transition between states, receiving rewards for its actions. Partially Observable Markov Decision Processes (POMDPs) are used to model MDPs where the true state is not known. Instead, the agent receives observations that are generated by the true state, and must infer what the true state is from the observations. Thus, the agent maintains a belief over true states which is updated as it receives new observations. In subsequent sections, we will refer to this belief over hidden states as $b$. The agent must then use this belief state to determine which action to take to maximize its expected value of the reward over time. This splits the POMDP into two main components, a state estimator and a policy generator. 
 
 
 \subsection{$\beta$-POMDP}
@@ -341,11 +299,6 @@ To account for suboptimal behavior and avoid irregularities in our observation f
 
 Using $\beta$ as a prior for our observation function incentivizes the robot to take actions that modify $\beta$ in such a way that increase the probability of useful observations, while in turn decreasing the probability of getting observations that tell the robot things it already knows. This result falls out of our assumption that the human is more likely to provide observations that communicate its intentions to the robot well. Consider the following example: 
 
-The robot has four objects within reach: a red bowl, a blue bowl, a red cup, and a blue cup. Of the four objects, the human desires the red bowl. They tell the robot they would like a bowl. At this point, the robot can choose to take an action or wait. 
-
-If the robot chooses to wait, the human's belief about what the robot knows remains uniform. Thus, according to the human, it is equally helpful for them to tell the robot the color of the bowl is red or to repeat themselves and say they would like a bowl. This is suboptimal for the robot, because there is a 50\% chance the robot will receive an observation that tells them no new information. 
-
-However, if the robot chooses to inform the human that the robot knows they would like a bowl, the human now knows that the best observation they can take is to inform the robot that the object they like is red. Thus, if the robot chooses to give the human feedback, with extremely high probability, they will receive a useful observation and be able to complete the interaction. 
 
 
 
